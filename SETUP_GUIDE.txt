@@ -102,9 +102,9 @@ IMPORTANT: This guide assumes you have NEVER coded before. Follow each step care
 
 ===============================================================================
 
-## PART 5: SETUP STRIPE (PAYMENT SYSTEM)
+## PART 5: SETUP PAYMENT GATEWAYS
 
-### Step 11: Create Stripe Account
+### Step 11: Create Stripe Account (For International Payments)
 1. Go to https://stripe.com/
 2. Click "Start now" or "Sign up"
 3. Create a free account with your email
@@ -118,10 +118,45 @@ IMPORTANT: This guide assumes you have NEVER coded before. Follow each step care
 4. Click "Reveal test key" for the Secret key
 5. Copy both keys (keep them safe!)
 
-### Step 13: Add Stripe Keys to Project
-1. In VS Code, open the file: backend/.env
-2. Replace "your_stripe_secret_key_here" with your actual Stripe secret key
-3. Replace "your_stripe_publishable_key_here" with your actual Stripe publishable key
+### Step 13: Setup UPI Payment Gateway (For Indian Payments)
+IMPORTANT: For production use, you'll need to integrate with one of these UPI providers:
+- Razorpay (https://razorpay.com/)
+- PayU (https://payu.in/)
+- Cashfree (https://www.cashfree.com/)
+- Paytm (https://business.paytm.com/)
+
+For development/testing:
+1. Go to https://razorpay.com/ (recommended for Indian market)
+2. Click "Sign Up" and create a free account
+3. Complete KYC verification (required for live payments)
+4. Get your API keys from the dashboard
+5. Note: UPI payments require Indian bank account and GST registration for live mode
+
+### Step 14: Add Payment Keys to Project
+1. In VS Code, create a file called `.env` in the backend folder if it doesn't exist
+2. Add these lines to the .env file:
+
+```
+# Database
+DATABASE_URL="file:./dev.db"
+
+# JWT Secret (change this to a random string)
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+
+# Stripe Keys (for international payments)
+STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key_here"
+STRIPE_PUBLISHABLE_KEY="pk_test_your_stripe_publishable_key_here"
+
+# Razorpay Keys (for UPI/Indian payments)
+RAZORPAY_KEY_ID="rzp_test_your_razorpay_key_id_here"
+RAZORPAY_KEY_SECRET="your_razorpay_key_secret_here"
+
+# Server Configuration
+PORT=5001
+NODE_ENV=development
+```
+
+3. Replace the placeholder values with your actual keys
 4. Save the file (Ctrl+S on Windows, Cmd+S on Mac)
 
 IMPORTANT: Keep these keys secret! Never share them publicly.
@@ -130,17 +165,17 @@ IMPORTANT: Keep these keys secret! Never share them publicly.
 
 ## PART 6: RUN THE APPLICATION
 
-### Step 14: Start the Application
+### Step 15: Start the Application
 1. In the VS Code terminal, make sure you're in the main project folder
 2. Type this command and press Enter:
    npm run dev
 
 3. Wait for both servers to start (this takes 30-60 seconds)
 4. You should see messages like:
-   - "Server running on port 5000"
+   - "Server running on port 5001"
    - "Local: http://localhost:5173"
 
-### Step 15: Open the Application
+### Step 16: Open the Application
 1. Open your web browser (Chrome, Firefox, Safari, etc.)
 2. Go to: http://localhost:5173
 3. You should see the tutoring platform homepage!
@@ -149,7 +184,7 @@ IMPORTANT: Keep these keys secret! Never share them publicly.
 
 ## PART 7: CREATE YOUR FIRST ADMIN ACCOUNT
 
-### Step 16: Register as Admin
+### Step 17: Register as Admin
 1. On the homepage, click "Get Started" or "Sign Up"
 2. Fill out the registration form:
    - Select "Become a Tutor" (we'll change this to admin)
@@ -158,48 +193,22 @@ IMPORTANT: Keep these keys secret! Never share them publicly.
    - Fill in the tutor fields (we'll fix this later)
 3. Click "Create Account"
 
-### Step 17: Make Yourself Admin (Database Fix)
+### Step 18: Make Yourself Admin (Database Fix)
 IMPORTANT: This is a temporary step to create your admin account.
 
 1. Stop the application by pressing Ctrl+C in the terminal
-2. In VS Code, create a new file called "make-admin.js" in the backend folder
-3. Copy this code into the file:
+2. In VS Code, open the file: backend/make-admin.js
+3. Change the email on line 6 to your actual email address:
+   ```javascript
+   const email = 'your-actual-email@example.com';
+   ```
+4. Save the file
+5. In terminal, type: cd backend
+6. Then type: node make-admin.js
+7. You should see "User updated to admin: your-email@example.com"
+8. Type: cd .. (to go back to main folder)
 
-```javascript
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-async function makeAdmin() {
-  // Replace 'your-email@example.com' with the email you used to register
-  const email = 'your-email@example.com';
-  
-  try {
-    const user = await prisma.user.update({
-      where: { email: email },
-      data: { role: 'ADMIN' }
-    });
-    
-    console.log('User updated to admin:', user.email);
-  } catch (error) {
-    console.error('Error:', error);
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-makeAdmin();
-```
-
-4. Replace 'your-email@example.com' with your actual email
-5. Save the file
-6. In terminal, type: cd backend
-7. Then type: node make-admin.js
-8. You should see "User updated to admin: your-email@example.com"
-9. Type: cd .. (to go back to main folder)
-10. Delete the make-admin.js file (it's no longer needed)
-
-### Step 18: Restart and Login as Admin
+### Step 19: Restart and Login as Admin
 1. Start the application again: npm run dev
 2. Go to http://localhost:5173
 3. Click "Sign In"
@@ -210,39 +219,86 @@ makeAdmin();
 
 ## PART 8: TEST THE SYSTEM
 
-### Step 19: Create Test Users
+### Step 20: Create Test Users
 1. Open a new browser tab (keep the admin tab open)
 2. Go to http://localhost:5173
 3. Create a student account:
    - Click "Get Started"
    - Select "Find a Tutor"
    - Fill out the form with test data
+   - Set budget in Indian Rupees (e.g., Min: ₹200, Max: ₹500)
    - Register the account
 4. Repeat for a tutor account:
    - Use a different email
    - Select "Become a Tutor"
    - Fill out tutor information
+   - Set hourly rate in Indian Rupees (e.g., ₹250/hour)
 
-### Step 20: Test Assignment Creation
+### Step 21: Test Assignment Creation
 1. Go back to your admin tab
 2. Click on "Assignments" tab
 3. Click "Create Assignment"
 4. Select the student and tutor you created
 5. Enter a subject (e.g., "Mathematics")
-6. Set fees (e.g., Student pays $50, Tutor gets $40)
+6. Set fees in Indian Rupees (e.g., Student pays ₹500, Tutor gets ₹400)
 7. Click "Create Assignment"
 
-### Step 21: Test Tutor Acceptance
+### Step 22: Test Tutor Acceptance
 1. Open another browser tab
 2. Login as the tutor you created
 3. You should see the assignment offer
 4. Click "Accept" to accept the assignment
 
-### Step 22: Test Student Payment
+### Step 23: Test Student Payment
 1. Open another browser tab
 2. Login as the student
 3. You should see the assignment with "Pay Now" button
-4. Click "Pay Now" (this will redirect to Stripe - use test card 4242 4242 4242 4242)
+4. Click "Pay Now"
+5. Choose payment method:
+   - For UPI: Select "UPI Payment" (currently shows simulation message)
+   - For Card: Select "Credit/Debit Card" (redirects to Stripe with test card 4242 4242 4242 4242)
+
+### Step 24: Test Profile Management
+1. In any dashboard, click the "Profile" link in the header
+2. Update your profile information
+3. Save changes and verify they're reflected in the dashboard
+
+===============================================================================
+
+## PART 9: PAYMENT GATEWAY INTEGRATION DETAILS
+
+### UPI Payment Integration (For Production)
+To integrate real UPI payments, you'll need to:
+
+1. **Choose a Payment Gateway:**
+   - Razorpay (Most popular in India)
+   - PayU
+   - Cashfree
+   - Paytm Business
+
+2. **Complete Business Registration:**
+   - GST registration
+   - Business bank account
+   - KYC verification
+   - Website/app verification
+
+3. **Integration Steps:**
+   - Get API credentials from your chosen provider
+   - Install their SDK/library
+   - Implement payment flow
+   - Handle webhooks for payment confirmation
+   - Test with real bank accounts
+
+4. **Current Implementation:**
+   - The app currently shows UPI as an option
+   - Clicking UPI shows a simulation message
+   - For production, replace this with actual gateway integration
+
+### Stripe Integration (Already Implemented)
+- Stripe is already integrated for card payments
+- Works internationally
+- Test mode is enabled by default
+- Use test card: 4242 4242 4242 4242
 
 ===============================================================================
 
@@ -257,8 +313,8 @@ makeAdmin();
 ### Issue 3: "Database connection error"
 - Solution: Make sure you ran "npm run setup" in Step 10.
 
-### Issue 4: "Stripe keys not working"
-- Solution: Double-check your Stripe keys in backend/.env file.
+### Issue 4: "Payment keys not working"
+- Solution: Double-check your payment gateway keys in backend/.env file.
 
 ### Issue 5: Application won't start
 - Solution: 
@@ -270,28 +326,45 @@ makeAdmin();
   6. Run "npm run dev"
 
 ### Issue 6: Can't see admin dashboard
-- Solution: Make sure you completed Step 17 to make your account an admin.
+- Solution: Make sure you completed Step 18 to make your account an admin.
+
+### Issue 7: Profile page not loading
+- Solution: Make sure you're logged in and try refreshing the page.
+
+### Issue 8: Currency showing as $ instead of ₹
+- Solution: The app has been updated to use Indian Rupees (₹). If you see $, clear your browser cache.
 
 ===============================================================================
 
 ## IMPORTANT NOTES FOR PRODUCTION
 
 ### Security Notes:
-1. Never share your .env file or Stripe keys
+1. Never share your .env file or payment gateway keys
 2. Use strong passwords for all accounts
 3. This setup is for DEVELOPMENT only - not ready for real users yet
+4. Enable HTTPS for production
+5. Use environment variables for all sensitive data
 
 ### For Real Deployment:
 1. You'll need a proper hosting service (like Heroku, AWS, or DigitalOcean)
 2. You'll need a real database (PostgreSQL on a server)
-3. You'll need to configure Stripe for live payments
+3. You'll need to configure payment gateways for live payments
 4. You'll need proper domain and SSL certificates
+5. Complete KYC and business verification for payment gateways
+
+### Payment Gateway Requirements for India:
+1. **Business Registration:** GST number, business PAN
+2. **Bank Account:** Current account in business name
+3. **Documents:** Business registration certificate, bank statements
+4. **Compliance:** RBI guidelines, PCI DSS compliance
+5. **Settlement:** T+1 or T+2 settlement cycles
 
 ### Getting Help:
 1. Check the terminal for error messages
 2. Make sure all steps were followed exactly
 3. Restart the application if something seems broken
 4. Check that all files are in the correct folders
+5. Verify your payment gateway credentials
 
 ===============================================================================
 
@@ -314,9 +387,43 @@ makeAdmin();
 
 ===============================================================================
 
-CONGRATULATIONS! 
-Your tutoring platform is now running. You can create students, tutors, assignments, and test the entire workflow.
+## FEATURES INCLUDED
 
-Remember: This is a development version. For real users, you'll need proper hosting and security measures.
+### Admin Features:
+- Dashboard with statistics
+- User management (view all students and tutors)
+- Assignment creation and management
+- Payment monitoring
+- Profile management
+
+### Student Features:
+- Dashboard with assignment overview
+- Payment processing (UPI + Card options)
+- Payment history
+- Profile management with budget settings
+
+### Tutor Features:
+- Assignment offers management
+- Accept/decline assignments
+- Earnings tracking
+- Profile management with subjects and rates
+
+### General Features:
+- Secure authentication
+- Role-based access control
+- Responsive design
+- Indian Rupee (₹) currency
+- UPI payment option (simulation)
+- Stripe integration for cards
+- Profile management for all user types
+
+===============================================================================
+
+CONGRATULATIONS! 
+Your tutoring platform is now running with Indian Rupee support and UPI payment options. You can create students, tutors, assignments, and test the entire workflow including payments.
+
+Remember: This is a development version. For real users, you'll need proper hosting, security measures, and complete payment gateway integration with business verification.
+
+For production deployment with real payments, contact your chosen payment gateway provider for business onboarding and integration support.
 
 ===============================================================================

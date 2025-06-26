@@ -6,9 +6,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+// import ProfilePage from './pages/ProfilePage';
 import StudentDashboard from './pages/StudentDashboard';
 import TutorDashboard from './pages/TutorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ProfilePage from './pages/ProfilePage';
 
 // Component to handle automatic redirects based on authentication
 const AuthRedirect: React.FC = () => {
@@ -57,15 +59,33 @@ function App() {
               </ProtectedRoute>
             } />
             
+            <Route path="/student/profile" element={
+              <ProtectedRoute requiredRole="STUDENT">
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/tutor/dashboard" element={
               <ProtectedRoute requiredRole="TUTOR">
                 <TutorDashboard />
               </ProtectedRoute>
             } />
             
+            <Route path="/tutor/profile" element={
+              <ProtectedRoute requiredRole="TUTOR">
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/admin/dashboard" element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/profile" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <ProfilePage />
               </ProtectedRoute>
             } />
             

@@ -35,6 +35,62 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// Get all students with their profile IDs
+router.get('/students', async (req, res) => {
+  try {
+    const students = await prisma.studentProfile.findMany({
+      include: {
+        user: true
+      },
+      orderBy: { user: { createdAt: 'desc' } }
+    });
+
+    const formattedStudents = students.map(student => ({
+      id: student.id, // This is the profile ID needed for assignments
+      userId: student.userId,
+      name: student.name,
+      email: student.user.email,
+      contactNumber: student.contactNumber,
+      preferredSubjects: JSON.parse(student.preferredSubjects || '[]'),
+      budgetMin: student.budgetMin,
+      budgetMax: student.budgetMax
+    }));
+
+    res.json(formattedStudents);
+  } catch (error) {
+    console.error('Students fetch error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get all tutors with their profile IDs
+router.get('/tutors', async (req, res) => {
+  try {
+    const tutors = await prisma.tutorProfile.findMany({
+      include: {
+        user: true
+      },
+      orderBy: { user: { createdAt: 'desc' } }
+    });
+
+    const formattedTutors = tutors.map(tutor => ({
+      id: tutor.id, // This is the profile ID needed for assignments
+      userId: tutor.userId,
+      name: tutor.name,
+      email: tutor.user.email,
+      contactNumber: tutor.contactNumber,
+      subjectsTaught: JSON.parse(tutor.subjectsTaught || '[]'),
+      experienceYears: tutor.experienceYears,
+      defaultHourlyRate: tutor.defaultHourlyRate
+    }));
+
+    res.json(formattedTutors);
+  } catch (error) {
+    console.error('Tutors fetch error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get all assignments
 router.get('/assignments', async (req, res) => {
   try {

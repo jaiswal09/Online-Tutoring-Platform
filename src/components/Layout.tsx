@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, BookOpen } from 'lucide-react';
+import { LogOut, User, BookOpen, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,13 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const { user, logout } = useAuth();
+
+  const getProfileLink = () => {
+    if (user?.role === 'ADMIN') return '/admin/profile';
+    if (user?.role === 'TUTOR') return '/tutor/profile';
+    if (user?.role === 'STUDENT') return '/student/profile';
+    return '/profile';
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -28,6 +36,14 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                   {user?.role}
                 </span>
               </div>
+              
+              <Link
+                to={getProfileLink()}
+                className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-sm">Profile</span>
+              </Link>
               
               <button
                 onClick={logout}
