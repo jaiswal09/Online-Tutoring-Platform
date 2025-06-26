@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { Users, BookOpen, IndianRupee, TrendingUp, Plus, Eye } from 'lucide-react';
+import { Users, BookOpen, IndianRupee, TrendingUp, Plus, Eye, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -65,6 +65,7 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Create assignment form state
   const [formData, setFormData] = useState({
@@ -81,28 +82,82 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
+      console.log('Fetching admin dashboard data...');
+      
       // Fetch all necessary data concurrently
       const [usersRes, studentsRes, tutorsRes, assignmentsRes, statsRes] = await Promise.all([
-        axios.get('/api/admin/users'),
-        axios.get('/api/admin/students'),
-        axios.get('/api/admin/tutors'),
-        axios.get('/api/admin/assignments'),
-        axios.get('/api/admin/stats')
+        axios.get('/api/admin/users').catch(err => {
+          console.error('Users fetch failed:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/admin/students').catch(err => {
+          console.error('Students fetch failed:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/admin/tutors').catch(err => {
+          console.error('Tutors fetch failed:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/admin/assignments').catch(err => {
+          console.error('Assignments fetch failed:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/admin/stats').catch(err => {
+          console.error('Stats fetch failed:', err);
+          return { data: { totalUsers: 0, totalStudents: 0, totalTutors: 0, totalAssignments: 0, activeAssignments: 0, totalRevenue: 0, pendingPayments: 0 } };
+        })
       ]);
+      
+      console.log('API Responses:', {
+        users: usersRes.data?.length || 0,
+        students: studentsRes.data?.length || 0,
+        tutors: tutorsRes.data?.length || 0,
+        assignments: assignmentsRes.data?.length || 0,
+        stats: statsRes.data
+      });
       
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
       setStudents(Array.isArray(studentsRes.data) ? studentsRes.data : []);
       setTutors(Array.isArray(tutorsRes.data) ? tutorsRes.data : []);
       setAssignments(Array.isArray(assignmentsRes.data) ? assignmentsRes.data : []);
-      setStats(statsRes.data);
-    } catch (error) {
+      setStats(statsRes.data || {
+        totalUsers: 0,
+        totalStudents: 0,
+        totalTutors: 0,
+        totalAssignments: 0,
+        activeAssignments: 0,
+        totalRevenue: 0,
+        pendingPayments: 0
+      });
+      
+      // Show success message if data was loaded
+      if (usersRes.data?.length > 0 || studentsRes.data?.length > 0 || tutorsRes.data?.length > 0) {
+        toast.success('Dashboard data loaded successfully');
+      }
+      
+    } catch (error: any) {
+      console.error('Dashboard data fetch error:', error);
+      setError('Failed to load dashboard data. Please check your connection and try again.');
       toast.error('Failed to load dashboard data');
-      setUsers([]); 
+      
+      // Set empty defaults
+      setUsers([]);
       setStudents([]);
       setTutors([]);
       setAssignments([]);
-      setStats(null); 
+      setStats({
+        totalUsers: 0,
+        totalStudents: 0,
+        totalTutors: 0,
+        totalAssignments: 0,
+        activeAssignments: 0,
+        totalRevenue: 0,
+        pendingPayments: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -137,6 +192,7 @@ const AdminDashboard: React.FC = () => {
       });
       fetchData();
     } catch (error: any) {
+      console.error('Assignment creation error:', error);
       toast.error(error.response?.data?.message || 'Failed to create assignment');
     }
   };
@@ -163,7 +219,10 @@ const AdminDashboard: React.FC = () => {
     return (
       <Layout title="Admin Dashboard">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -172,13 +231,44 @@ const AdminDashboard: React.FC = () => {
   return (
     <Layout title="Admin Dashboard">
       <div className="space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <button
+                  onClick={fetchData}
+                  className="mt-2 text-sm bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Debug Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Debug Information</h3>
+          <div className="text-xs text-blue-700 space-y-1">
+            <p>Users loaded: {users.length}</p>
+            <p>Students loaded: {students.length}</p>
+            <p>Tutors loaded: {tutors.length}</p>
+            <p>Assignments loaded: {assignments.length}</p>
+            <p>Stats loaded: {stats ? 'Yes' : 'No'}</p>
+          </div>
+        </div>
+
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
               { id: 'overview', name: 'Overview' },
-              { id: 'users', name: 'Users' },
-              { id: 'assignments', name: 'Assignments' },
+              { id: 'users', name: `Users (${users.length})` },
+              { id: 'assignments', name: `Assignments (${assignments.length})` },
               { id: 'payments', name: 'Payments' }
             ].map((tab) => (
               <button
@@ -289,72 +379,151 @@ const AdminDashboard: React.FC = () => {
 
         {/* Users Tab Content */}
         {activeTab === 'users' && (
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="px-6 py-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">All Users</h2>
+          <div className="space-y-6">
+            {/* Students Section */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="px-6 py-4 border-b">
+                <h2 className="text-lg font-semibold text-gray-900">Students ({students.length})</h2>
+              </div>
+              
+              {students.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Budget Range
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Subjects
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {students.map((student) => (
+                        <tr key={student.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {student.name || 'No name'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{student.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{student.contactNumber || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              ₹{student.budgetMin || 0} - ₹{student.budgetMax || 0}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {Array.isArray(student.preferredSubjects) 
+                                ? student.preferredSubjects.join(', ') || 'None'
+                                : 'None'
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="px-6 py-12 text-center">
+                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Students will appear here once they register.
+                  </p>
+                </div>
+              )}
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Joined
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Profile
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {user.profile?.name || 'No name'}
-                          </div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.role === 'STUDENT' 
-                            ? 'bg-blue-100 text-blue-800'
-                            : user.role === 'TUTOR'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.profile && (
-                          <div className="text-sm text-gray-500">
-                            {user.role === 'STUDENT' && (
-                              <span>Budget: ₹{user.profile.budgetMin ?? 0} - ₹{user.profile.budgetMax ?? 0}</span>
-                            )}
-                            {user.role === 'TUTOR' && (
-                              <span>Rate: ₹{user.profile.defaultHourlyRate ?? 0}/hr</span>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            {/* Tutors Section */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="px-6 py-4 border-b">
+                <h2 className="text-lg font-semibold text-gray-900">Tutors ({tutors.length})</h2>
+              </div>
+              
+              {tutors.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Experience
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Rate
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Subjects
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {tutors.map((tutor) => (
+                        <tr key={tutor.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {tutor.name || 'No name'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{tutor.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{tutor.contactNumber || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{tutor.experienceYears || 0} years</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">₹{tutor.defaultHourlyRate || 0}/hr</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {Array.isArray(tutor.subjectsTaught) 
+                                ? tutor.subjectsTaught.join(', ') || 'None'
+                                : 'None'
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="px-6 py-12 text-center">
+                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No tutors found</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Tutors will appear here once they register.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -366,15 +535,33 @@ const AdminDashboard: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900">Assignment Management</h2>
               <button
                 onClick={() => setShowCreateForm(!showCreateForm)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition duration-150 ease-in-out"
+                disabled={students.length === 0 || tutors.length === 0}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Assignment
               </button>
             </div>
 
+            {/* Warning if no students or tutors */}
+            {(students.length === 0 || tutors.length === 0) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-yellow-400" />
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">Cannot Create Assignments</h3>
+                    <p className="mt-1 text-sm text-yellow-700">
+                      You need at least one student and one tutor to create assignments.
+                      {students.length === 0 && ' No students found.'}
+                      {tutors.length === 0 && ' No tutors found.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Create Assignment Form */}
-            {showCreateForm && (
+            {showCreateForm && students.length > 0 && tutors.length > 0 && (
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Assignment</h3>
                 <form onSubmit={handleCreateAssignment} className="space-y-4">
@@ -492,84 +679,84 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">All Assignments</h3>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Student
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tutor
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Subject
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total Fee
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tutor Fee
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Commission
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {assignments.map((assignment) => (
-                      <tr key={assignment.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {assignment.student.name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {assignment.tutor.name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {assignment.subject}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            ₹{(assignment.totalFeeToStudent ?? 0).toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-green-600">
-                            ₹{(assignment.adminSetTutorFee ?? 0).toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-blue-600">
-                            ₹{(assignment.platformCommission ?? 0).toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(assignment.status)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {new Date(assignment.createdAt).toLocaleDateString()}
-                          </div>
-                        </td>
+              {assignments.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tutor
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Subject
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Fee
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tutor Fee
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Commission
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {assignments.length === 0 && (
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {assignments.map((assignment) => (
+                        <tr key={assignment.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {assignment.student.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {assignment.tutor.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {assignment.subject}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              ₹{(assignment.totalFeeToStudent ?? 0).toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-green-600">
+                              ₹{(assignment.adminSetTutorFee ?? 0).toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-blue-600">
+                              ₹{(assignment.platformCommission ?? 0).toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(assignment.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {new Date(assignment.createdAt).toLocaleDateString()}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
                 <div className="px-6 py-12 text-center">
                   <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments yet</h3>

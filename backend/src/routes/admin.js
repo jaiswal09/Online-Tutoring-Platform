@@ -28,6 +28,7 @@ router.get('/users', async (req, res) => {
       profile: user.student || user.tutor || null
     }));
 
+    console.log('Fetched users:', formattedUsers.length);
     res.json(formattedUsers);
   } catch (error) {
     console.error('Users fetch error:', error);
@@ -45,17 +46,28 @@ router.get('/students', async (req, res) => {
       orderBy: { user: { createdAt: 'desc' } }
     });
 
-    const formattedStudents = students.map(student => ({
-      id: student.id, // This is the profile ID needed for assignments
-      userId: student.userId,
-      name: student.name,
-      email: student.user.email,
-      contactNumber: student.contactNumber,
-      preferredSubjects: JSON.parse(student.preferredSubjects || '[]'),
-      budgetMin: student.budgetMin,
-      budgetMax: student.budgetMax
-    }));
+    const formattedStudents = students.map(student => {
+      // Parse JSON strings safely
+      let preferredSubjects = [];
+      try {
+        preferredSubjects = JSON.parse(student.preferredSubjects || '[]');
+      } catch (e) {
+        preferredSubjects = [];
+      }
 
+      return {
+        id: student.id, // This is the profile ID needed for assignments
+        userId: student.userId,
+        name: student.name,
+        email: student.user.email,
+        contactNumber: student.contactNumber,
+        preferredSubjects: preferredSubjects,
+        budgetMin: student.budgetMin,
+        budgetMax: student.budgetMax
+      };
+    });
+
+    console.log('Fetched students:', formattedStudents.length);
     res.json(formattedStudents);
   } catch (error) {
     console.error('Students fetch error:', error);
@@ -73,17 +85,28 @@ router.get('/tutors', async (req, res) => {
       orderBy: { user: { createdAt: 'desc' } }
     });
 
-    const formattedTutors = tutors.map(tutor => ({
-      id: tutor.id, // This is the profile ID needed for assignments
-      userId: tutor.userId,
-      name: tutor.name,
-      email: tutor.user.email,
-      contactNumber: tutor.contactNumber,
-      subjectsTaught: JSON.parse(tutor.subjectsTaught || '[]'),
-      experienceYears: tutor.experienceYears,
-      defaultHourlyRate: tutor.defaultHourlyRate
-    }));
+    const formattedTutors = tutors.map(tutor => {
+      // Parse JSON strings safely
+      let subjectsTaught = [];
+      try {
+        subjectsTaught = JSON.parse(tutor.subjectsTaught || '[]');
+      } catch (e) {
+        subjectsTaught = [];
+      }
 
+      return {
+        id: tutor.id, // This is the profile ID needed for assignments
+        userId: tutor.userId,
+        name: tutor.name,
+        email: tutor.user.email,
+        contactNumber: tutor.contactNumber,
+        subjectsTaught: subjectsTaught,
+        experienceYears: tutor.experienceYears,
+        defaultHourlyRate: tutor.defaultHourlyRate
+      };
+    });
+
+    console.log('Fetched tutors:', formattedTutors.length);
     res.json(formattedTutors);
   } catch (error) {
     console.error('Tutors fetch error:', error);
@@ -96,14 +119,38 @@ router.get('/assignments', async (req, res) => {
   try {
     const assignments = await prisma.assignment.findMany({
       include: {
-        student: true,
-        tutor: true,
+        student: {
+          include: {
+            user: true
+          }
+        },
+        tutor: {
+          include: {
+            user: true
+          }
+        },
         payment: true
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json(assignments);
+    // Format assignments with proper student and tutor names
+    const formattedAssignments = assignments.map(assignment => ({
+      ...assignment,
+      student: {
+        ...assignment.student,
+        name: assignment.student.name,
+        email: assignment.student.user.email
+      },
+      tutor: {
+        ...assignment.tutor,
+        name: assignment.tutor.name,
+        email: assignment.tutor.user.email
+      }
+    }));
+
+    console.log('Fetched assignments:', formattedAssignments.length);
+    res.json(formattedAssignments);
   } catch (error) {
     console.error('Assignments fetch error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -125,6 +172,19 @@ router.post('/assignments', async (req, res) => {
       return res.status(400).json({ message: 'Tutor fee cannot exceed total fee' });
     }
 
+    // Verify student and tutor exist
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentId }
+    });
+    
+    const tutor = await prisma.tutorProfile.findUnique({
+      where: { id: tutorId }
+    });
+
+    if (!student || !tutor) {
+      return res.status(400).json({ message: 'Invalid student or tutor ID' });
+    }
+
     const assignment = await prisma.assignment.create({
       data: {
         studentId,
@@ -136,11 +196,20 @@ router.post('/assignments', async (req, res) => {
         status: 'PENDING_OFFER'
       },
       include: {
-        student: true,
-        tutor: true
+        student: {
+          include: {
+            user: true
+          }
+        },
+        tutor: {
+          include: {
+            user: true
+          }
+        }
       }
     });
 
+    console.log('Created assignment:', assignment.id);
     res.status(201).json({
       message: 'Assignment created successfully',
       assignment
@@ -161,8 +230,16 @@ router.put('/assignments/:id/status', async (req, res) => {
       where: { id },
       data: { status },
       include: {
-        student: true,
-        tutor: true
+        student: {
+          include: {
+            user: true
+          }
+        },
+        tutor: {
+          include: {
+            user: true
+          }
+        }
       }
     });
 
@@ -183,14 +260,23 @@ router.get('/payments', async (req, res) => {
       include: {
         assignment: {
           include: {
-            student: true,
-            tutor: true
+            student: {
+              include: {
+                user: true
+              }
+            },
+            tutor: {
+              include: {
+                user: true
+              }
+            }
           }
         }
       },
       orderBy: { paidAt: 'desc' }
     });
 
+    console.log('Fetched payments:', payments.length);
     res.json(payments);
   } catch (error) {
     console.error('Payments fetch error:', error);
@@ -222,7 +308,7 @@ router.get('/stats', async (req, res) => {
       prisma.assignment.count({ where: { status: 'PAYMENT_PENDING' } })
     ]);
 
-    res.json({
+    const stats = {
       totalUsers,
       totalStudents,
       totalTutors,
@@ -230,7 +316,10 @@ router.get('/stats', async (req, res) => {
       activeAssignments,
       totalRevenue: totalRevenue._sum.platformFeeCollected || 0,
       pendingPayments
-    });
+    };
+
+    console.log('Dashboard stats:', stats);
+    res.json(stats);
   } catch (error) {
     console.error('Stats fetch error:', error);
     res.status(500).json({ message: 'Internal server error' });
