@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+// ...existing code...
+
+// REMOVE all enum definitions
+
+// ...existing code...
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   // Allowed: "STUDENT", "TUTOR", "ADMIN"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student StudentProfile?
+  tutor   TutorProfile?
+}
+
+model StudentProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  name              String
+  contactNumber     String?
+  preferredSubjects String   // JSON string array
+  budgetMin         Int?
+  budgetMax         Int?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+}
+
+model TutorProfile {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  name                     String
+  contactNumber            String?
+  subjectsTaught           String   // JSON string array
+  experienceYears          Int
+  defaultHourlyRate        Float
+  availability             String?  // JSON string
+  stripeConnectAccountId   String?  @unique
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+  payouts     Payout[]
+}
+
+model Assignment {
+  id                String   @id @default(cuid())
+  studentId         String
+  tutorId           String
+  subject           String
+  totalFeeToStudent Float
+  adminSetTutorFee  Float
+  platformCommission Float
+  status            String   @default("PENDING_OFFER") // Allowed: "PENDING_OFFER", "TUTOR_ACCEPTED", etc.
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id])
+  tutor   TutorProfile   @relation(fields: [tutorId], references: [id])
+  payment Payment?
+  payout  Payout?
+}
+
+model Payment {
+  id                   String   @id @default(cuid())
+  assignmentId         String   @unique
+  stripeChargeId       String?
+  amountCharged        Float
+  platformFeeCollected Float
+  status               String   @default("SUCCEEDED") // Allowed: "SUCCEEDED", "FAILED", "REFUNDED"
+  paidAt               DateTime @default(now())
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+}
+
+model Payout {
+  id                  String   @id @default(cuid())
+  tutorId             String
+  assignmentId        String   @unique
+  amount              Float
+  stripePayoutId      String?
+  status              String   @default("PENDING") // Allowed: "PENDING", "PAID", "FAILED"
+  payoutInitiatedAt   DateTime @default(now())
+  payoutCompletedAt   DateTime?
+
+  tutor      TutorProfile @relation(fields: [tutorId], references: [id])
+  assignment Assignment   @relation(fields: [assignmentId], references: [id])
+}
