@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { Users, BookOpen, IndianRupee, TrendingUp, Plus, Eye, AlertCircle } from 'lucide-react';
+import { Users, BookOpen, IndianRupee, TrendingUp, Plus, Eye, AlertCircle, BarChart3, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -136,7 +136,7 @@ const AdminDashboard: React.FC = () => {
       
       // Show success message if data was loaded
       if (usersRes.data?.length > 0 || studentsRes.data?.length > 0 || tutorsRes.data?.length > 0) {
-        toast.success('Dashboard data loaded successfully');
+        toast.success('Dashboard data loaded successfully! 📊');
       }
       
     } catch (error: any) {
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
         adminSetTutorFee: parseFloat(formData.adminSetTutorFee)
       });
 
-      toast.success('Assignment created successfully!');
+      toast.success('Assignment created successfully! 🎉');
       setShowCreateForm(false);
       setFormData({
         studentId: '',
@@ -199,17 +199,17 @@ const AdminDashboard: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusColors: { [key: string]: string } = {
-      'PENDING_OFFER': 'bg-yellow-100 text-yellow-800',
-      'TUTOR_ACCEPTED': 'bg-green-100 text-green-800',
-      'TUTOR_DECLINED': 'bg-red-100 text-red-800',
-      'PAYMENT_PENDING': 'bg-blue-100 text-blue-800',
-      'IN_PROGRESS': 'bg-purple-100 text-purple-800',
-      'COMPLETED': 'bg-gray-100 text-gray-800',
-      'CANCELED': 'bg-red-100 text-red-800'
+      'PENDING_OFFER': 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300',
+      'TUTOR_ACCEPTED': 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300',
+      'TUTOR_DECLINED': 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300',
+      'PAYMENT_PENDING': 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300',
+      'IN_PROGRESS': 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300',
+      'COMPLETED': 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300',
+      'CANCELED': 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300'
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'} animate-fadeInUp`}>
         {status.replace('_', ' ')}
       </span>
     );
@@ -219,9 +219,9 @@ const AdminDashboard: React.FC = () => {
     return (
       <Layout title="Admin Dashboard">
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+          <div className="text-center animate-fadeInUp">
+            <div className="spinner w-12 h-12 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard data...</p>
           </div>
         </div>
       </Layout>
@@ -230,10 +230,10 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <Layout title="Admin Dashboard">
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="card bg-red-50 border-red-200 p-4 animate-fadeInUp">
             <div className="flex">
               <AlertCircle className="h-5 w-5 text-red-400" />
               <div className="ml-3">
@@ -241,7 +241,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
                   onClick={fetchData}
-                  className="mt-2 text-sm bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
+                  className="mt-2 text-sm bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors duration-300"
                 >
                   Retry
                 </button>
@@ -250,37 +250,26 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Debug Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Debug Information</h3>
-          <div className="text-xs text-blue-700 space-y-1">
-            <p>Users loaded: {users.length}</p>
-            <p>Students loaded: {students.length}</p>
-            <p>Tutors loaded: {tutors.length}</p>
-            <p>Assignments loaded: {assignments.length}</p>
-            <p>Stats loaded: {stats ? 'Yes' : 'No'}</p>
-          </div>
-        </div>
-
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 animate-fadeInUp">
           <nav className="-mb-px flex space-x-8">
             {[
-              { id: 'overview', name: 'Overview' },
-              { id: 'users', name: `Users (${users.length})` },
-              { id: 'assignments', name: `Assignments (${assignments.length})` },
-              { id: 'payments', name: 'Payments' }
-            ].map((tab) => (
+              { id: 'overview', name: 'Overview', icon: BarChart3 },
+              { id: 'users', name: `Users (${users.length})`, icon: Users },
+              { id: 'assignments', name: `Assignments (${assignments.length})`, icon: BookOpen },
+              { id: 'payments', name: 'Payments', icon: IndianRupee }
+            ].map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`group py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-all duration-300 animate-slideInLeft stagger-${index + 1} ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {tab.name}
+                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} transition-colors duration-300`} />
+                <span>{tab.name}</span>
               </button>
             ))}
           </nav>
@@ -288,88 +277,127 @@ const AdminDashboard: React.FC = () => {
 
         {/* Overview Tab Content */}
         {activeTab === 'overview' && stats && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="card card-hover p-6 animate-fadeInUp stagger-1">
                 <div className="flex items-center">
-                  <Users className="h-8 w-8 text-blue-600" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total Users</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                    <p className="text-xs text-green-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +12% from last month
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="card card-hover p-6 animate-fadeInUp stagger-2">
                 <div className="flex items-center">
-                  <BookOpen className="h-8 w-8 text-green-600" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                    <BookOpen className="h-6 w-6 text-white" />
+                  </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total Assignments</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.totalAssignments}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalAssignments}</p>
+                    <p className="text-xs text-green-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +8% from last month
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="card card-hover p-6 animate-fadeInUp stagger-3">
                 <div className="flex items-center">
-                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-white" />
+                  </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Active Assignments</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.activeAssignments}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.activeAssignments}</p>
+                    <p className="text-xs text-blue-600 flex items-center mt-1">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Currently active
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="card card-hover p-6 animate-fadeInUp stagger-4">
                 <div className="flex items-center">
-                  <IndianRupee className="h-8 w-8 text-green-600" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                    <IndianRupee className="h-6 w-6 text-white" />
+                  </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Platform Revenue</p>
-                    <p className="text-2xl font-semibold text-gray-900">₹{(stats.totalRevenue ?? 0).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-gray-900">₹{(stats.totalRevenue ?? 0).toFixed(2)}</p>
+                    <p className="text-xs text-green-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +15% from last month
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">User Breakdown</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Students</span>
-                    <span className="font-medium">{stats.totalStudents}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="card p-6 animate-fadeInUp stagger-5">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                  User Breakdown
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">Students</span>
+                    <span className="font-bold text-blue-600">{stats.totalStudents}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tutors</span>
-                    <span className="font-medium">{stats.totalTutors}</span>
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">Tutors</span>
+                    <span className="font-bold text-green-600">{stats.totalTutors}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Pending Payments</span>
-                    <span className="font-medium">{stats.pendingPayments}</span>
+                  <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">Pending Payments</span>
+                    <span className="font-bold text-yellow-600">{stats.pendingPayments}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="card p-6 animate-fadeInUp stagger-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                  <Activity className="h-5 w-5 mr-2 text-purple-600" />
+                  Quick Actions
+                </h3>
                 <div className="space-y-3">
                   <button
                     onClick={() => setActiveTab('assignments')}
-                    className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-300 hover:scale-105 hover:shadow-md"
                   >
-                    Create New Assignment
+                    <div className="flex items-center">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create New Assignment
+                    </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('users')}
-                    className="w-full text-left px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-green-50 to-green-100 text-green-700 rounded-lg hover:from-green-100 hover:to-green-200 transition-all duration-300 hover:scale-105 hover:shadow-md"
                   >
-                    Manage Users
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2" />
+                      Manage Users
+                    </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('payments')}
-                    className="w-full text-left px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all duration-300 hover:scale-105 hover:shadow-md"
                   >
-                    View Payments
+                    <div className="flex items-center">
+                      <IndianRupee className="h-4 w-4 mr-2" />
+                      View Payments
+                    </div>
                   </button>
                 </div>
               </div>
@@ -379,11 +407,14 @@ const AdminDashboard: React.FC = () => {
 
         {/* Users Tab Content */}
         {activeTab === 'users' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Students Section */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Students ({students.length})</h2>
+            <div className="card animate-fadeInUp">
+              <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-blue-600" />
+                  Students ({students.length})
+                </h2>
               </div>
               
               {students.length > 0 ? (
@@ -409,11 +440,18 @@ const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {students.map((student) => (
-                        <tr key={student.id}>
+                      {students.map((student, index) => (
+                        <tr key={student.id} className={`hover:bg-gray-50 transition-colors duration-300 animate-fadeInUp stagger-${(index % 6) + 1}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {student.name || 'No name'}
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                {student.name?.charAt(0) || 'S'}
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {student.name || 'No name'}
+                                </div>
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -442,7 +480,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="px-6 py-12 text-center">
-                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <Users className="mx-auto h-12 w-12 text-gray-400 animate-float" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     Students will appear here once they register.
@@ -452,9 +490,12 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Tutors Section */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Tutors ({tutors.length})</h2>
+            <div className="card animate-fadeInUp stagger-2">
+              <div className="px-6 py-4 border-b bg-gradient-to-r from-green-50 to-green-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-green-600" />
+                  Tutors ({tutors.length})
+                </h2>
               </div>
               
               {tutors.length > 0 ? (
@@ -483,11 +524,18 @@ const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {tutors.map((tutor) => (
-                        <tr key={tutor.id}>
+                      {tutors.map((tutor, index) => (
+                        <tr key={tutor.id} className={`hover:bg-gray-50 transition-colors duration-300 animate-fadeInUp stagger-${(index % 6) + 1}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {tutor.name || 'No name'}
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                {tutor.name?.charAt(0) || 'T'}
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {tutor.name || 'No name'}
+                                </div>
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -500,7 +548,7 @@ const AdminDashboard: React.FC = () => {
                             <div className="text-sm text-gray-500">{tutor.experienceYears || 0} years</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">₹{tutor.defaultHourlyRate || 0}/hr</div>
+                            <div className="text-sm font-medium text-green-600">₹{tutor.defaultHourlyRate || 0}/hr</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">
@@ -517,7 +565,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="px-6 py-12 text-center">
-                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <BookOpen className="mx-auto h-12 w-12 text-gray-400 animate-float" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No tutors found</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     Tutors will appear here once they register.
@@ -530,13 +578,16 @@ const AdminDashboard: React.FC = () => {
 
         {/* Assignments Tab Content */}
         {activeTab === 'assignments' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Assignment Management</h2>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center animate-fadeInUp">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                Assignment Management
+              </h2>
               <button
                 onClick={() => setShowCreateForm(!showCreateForm)}
                 disabled={students.length === 0 || tutors.length === 0}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Assignment
@@ -545,7 +596,7 @@ const AdminDashboard: React.FC = () => {
 
             {/* Warning if no students or tutors */}
             {(students.length === 0 || tutors.length === 0) && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <div className="card bg-yellow-50 border-yellow-200 p-4 animate-fadeInUp">
                 <div className="flex">
                   <AlertCircle className="h-5 w-5 text-yellow-400" />
                   <div className="ml-3">
@@ -562,17 +613,20 @@ const AdminDashboard: React.FC = () => {
 
             {/* Create Assignment Form */}
             {showCreateForm && students.length > 0 && tutors.length > 0 && (
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Assignment</h3>
-                <form onSubmit={handleCreateAssignment} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">Student</label>
+              <div className="card p-6 animate-scaleIn">
+                <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                  <Plus className="h-5 w-5 mr-2 text-blue-600" />
+                  Create New Assignment
+                </h3>
+                <form onSubmit={handleCreateAssignment} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="animate-slideInLeft stagger-1">
+                      <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 mb-2">Student</label>
                       <select
                         id="studentId"
                         value={formData.studentId}
                         onChange={(e) => setFormData({...formData, studentId: e.target.value})}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input-modern"
                         required
                       >
                         <option value="">Select a student</option>
@@ -584,13 +638,13 @@ const AdminDashboard: React.FC = () => {
                       </select>
                     </div>
 
-                    <div>
-                      <label htmlFor="tutorId" className="block text-sm font-medium text-gray-700">Tutor</label>
+                    <div className="animate-slideInRight stagger-1">
+                      <label htmlFor="tutorId" className="block text-sm font-medium text-gray-700 mb-2">Tutor</label>
                       <select
                         id="tutorId"
                         value={formData.tutorId}
                         onChange={(e) => setFormData({...formData, tutorId: e.target.value})}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input-modern"
                         required
                       >
                         <option value="">Select a tutor</option>
@@ -602,69 +656,71 @@ const AdminDashboard: React.FC = () => {
                       </select>
                     </div>
 
-                    <div>
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject</label>
+                    <div className="animate-slideInLeft stagger-2">
+                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                       <input
                         type="text"
                         id="subject"
                         value={formData.subject}
                         onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input-modern"
                         placeholder="e.g., Mathematics"
                         required
                       />
                     </div>
 
-                    <div>
-                      <label htmlFor="totalFeeToStudent" className="block text-sm font-medium text-gray-700">Total Fee to Student (₹)</label>
+                    <div className="animate-slideInRight stagger-2">
+                      <label htmlFor="totalFeeToStudent" className="block text-sm font-medium text-gray-700 mb-2">Total Fee to Student (₹)</label>
                       <input
                         type="number"
                         id="totalFeeToStudent"
                         step="0.01"
                         value={formData.totalFeeToStudent}
                         onChange={(e) => setFormData({...formData, totalFeeToStudent: e.target.value})}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input-modern"
                         placeholder="500.00"
                         required
                       />
                     </div>
 
-                    <div>
-                      <label htmlFor="adminSetTutorFee" className="block text-sm font-medium text-gray-700">Tutor's Fee (₹)</label>
+                    <div className="animate-slideInLeft stagger-3">
+                      <label htmlFor="adminSetTutorFee" className="block text-sm font-medium text-gray-700 mb-2">Tutor's Fee (₹)</label>
                       <input
                         type="number"
                         id="adminSetTutorFee"
                         step="0.01"
                         value={formData.adminSetTutorFee}
                         onChange={(e) => setFormData({...formData, adminSetTutorFee: e.target.value})}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input-modern"
                         placeholder="400.00"
                         required
                       />
                     </div>
 
-                    <div className="flex items-end">
-                      <div className="text-sm text-gray-600">
-                        Platform Commission: ₹
-                        {formData.totalFeeToStudent && formData.adminSetTutorFee 
-                          ? (parseFloat(formData.totalFeeToStudent) - parseFloat(formData.adminSetTutorFee)).toFixed(2)
-                          : '0.00'
-                        }
+                    <div className="flex items-end animate-slideInRight stagger-3">
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+                        <div className="text-sm font-medium text-green-800">
+                          Platform Commission: ₹
+                          {formData.totalFeeToStudent && formData.adminSetTutorFee 
+                            ? (parseFloat(formData.totalFeeToStudent) - parseFloat(formData.adminSetTutorFee)).toFixed(2)
+                            : '0.00'
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-3">
+                  <div className="flex justify-end space-x-3 animate-fadeInUp stagger-4">
                     <button
                       type="button"
                       onClick={() => setShowCreateForm(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition duration-150 ease-in-out"
+                      className="btn-secondary"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition duration-150 ease-in-out"
+                      className="btn-primary"
                     >
                       Create Assignment
                     </button>
@@ -674,9 +730,12 @@ const AdminDashboard: React.FC = () => {
             )}
 
             {/* Assignments List */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="px-6 py-4 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">All Assignments</h3>
+            <div className="card animate-fadeInUp">
+              <div className="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-purple-600" />
+                  All Assignments
+                </h3>
               </div>
               
               {assignments.length > 0 ? (
@@ -711,8 +770,8 @@ const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {assignments.map((assignment) => (
-                        <tr key={assignment.id}>
+                      {assignments.map((assignment, index) => (
+                        <tr key={assignment.id} className={`hover:bg-gray-50 transition-colors duration-300 animate-fadeInUp stagger-${(index % 6) + 1}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
                               {assignment.student.name}
@@ -758,7 +817,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="px-6 py-12 text-center">
-                  <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+                  <BookOpen className="mx-auto h-12 w-12 text-gray-400 animate-float" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments yet</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     Create your first assignment to get started.
@@ -771,18 +830,26 @@ const AdminDashboard: React.FC = () => {
 
         {/* Payments Tab Content */}
         {activeTab === 'payments' && (
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="px-6 py-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Payment Monitoring</h2>
+          <div className="card animate-fadeInUp">
+            <div className="px-6 py-4 border-b bg-gradient-to-r from-green-50 to-green-100">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <IndianRupee className="h-5 w-5 mr-2 text-green-600" />
+                Payment Monitoring
+              </h2>
             </div>
             
             <div className="p-6">
               <div className="text-center py-12">
-                <IndianRupee className="mx-auto h-12 w-12 text-gray-400" />
+                <IndianRupee className="mx-auto h-12 w-12 text-gray-400 animate-float" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Payment monitoring</h3>
                 <p className="mt-1 text-sm text-gray-500">
                   Payment details and UPI/Stripe integration will be implemented here.
                 </p>
+                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-700">
+                    💡 Coming soon: Real-time payment tracking, transaction history, and automated reconciliation
+                  </p>
+                </div>
               </div>
             </div>
           </div>
